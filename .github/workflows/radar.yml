@@ -1,0 +1,34 @@
+name: Radar
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - uses: actions/cache@v4
+        with:
+          path: |
+            seen.json
+            subscribers.json
+            offset.json
+          key: radar-state-${{ github.run_id }}
+          restore-keys: radar-state-
+      - run: python radar.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
